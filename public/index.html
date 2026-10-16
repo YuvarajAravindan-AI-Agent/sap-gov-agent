@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Governed Stock Agent</title>
+<style>
+:root{--bg:#f7f8fa;--card:#fff;--ink:#1d2d3e;--mute:#6a7a8c;--line:#dfe5ec;--brand:#0a6ed1;--ok:#107e3e;--bad:#bb0000}
+@media(prefers-color-scheme:dark){:root{--bg:#10151b;--card:#1a222b;--ink:#e6edf3;--mute:#8a9bad;--line:#2b3744;--brand:#58a6ff;--ok:#3fb950;--bad:#f85149}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px;display:flex;flex-direction:column;min-height:100vh}
+h1{font-size:18px;margin:4px 0 2px}p.sub{margin:0 0 12px;color:var(--mute);font-size:13px}
+#log{flex:1;display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.msg{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);white-space:pre-wrap}
+.user{align-self:flex-end;background:var(--brand);color:#fff;border-color:transparent;max-width:85%}
+.bot{max-width:100%}
+details{margin-top:8px;font-size:12px;color:var(--mute)}details pre{margin:6px 0 0;padding:8px;background:var(--bg);border-radius:6px;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.tool{display:flex;gap:6px;align-items:center}.s200{color:var(--ok)}.sbad{color:var(--bad)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 10px;border-radius:16px;cursor:pointer;font:inherit;font-size:13px}
+form{display:flex;gap:8px;position:sticky;bottom:0;padding:10px 0;background:var(--bg)}
+input{flex:1;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+button.send{padding:10px 16px;border:0;border-radius:8px;background:var(--brand);color:#fff;font:inherit;cursor:pointer}
+button:disabled{opacity:.5}.cid{font-size:11px;color:var(--mute);margin-top:6px}
+</style></head><body><main>
+<h1>Governed stock agent</h1>
+<p class="sub">Every quantity comes from the audited SAP service. Each tool call is logged on HANA under this conversation's id.</p>
+<div class="chips" id="chips"></div>
+<div id="log"></div>
+<form id="f"><input id="q" placeholder="Ask about a maintenance order or material" autocomplete="off"><button class="send" id="b">Send</button></form>
+</main>
+<script>
+const log=document.getElementById('log'),q=document.getElementById('q'),b=document.getElementById('b');
+let messages=[],cid=null;
+for(const t of ['Is order 1000001 ready to proceed?','Why is material 42 short?','How much stock does material 41 have, and where?','Check order 999999'])
+ {const x=document.createElement('button');x.textContent=t;x.onclick=()=>{q.value=t;f.requestSubmit()};chips.appendChild(x)}
+function add(cls,text){const d=document.createElement('div');d.className='msg '+cls;d.textContent=text;log.appendChild(d);d.scrollIntoView({block:'end'});return d}
+f.onsubmit=async e=>{e.preventDefault();const text=q.value.trim();if(!text)return;q.value='';b.disabled=true;
+ messages.push({role:'user',content:text});add('user',text);const w=add('bot','Checking the SAP service…');
+ try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages,conversationId:cid})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error||r.status);cid=j.conversationId;messages.push({role:'assistant',content:j.reply});
+  w.textContent=j.reply.replace(/[*]{2}/g,"");
+  if(j.trace.length){const d=document.createElement('details');const s=document.createElement('summary');s.textContent=j.trace.length+' governed tool call(s)';d.appendChild(s);
+   for(const t of j.trace){const p=document.createElement('pre');p.innerHTML='';const h=document.createElement('div');h.className='tool';
+    const st=document.createElement('b');st.className=t.status===200?'s200':'sbad';st.textContent=t.status;h.append(st,' '+t.tool+'('+JSON.stringify(t.args)+')');
+    p.textContent=JSON.stringify(t.result,null,1);d.append(h,p)}w.appendChild(d)}
+  const c=document.createElement('div');c.className='cid';c.textContent='conversation id (audit correlation): '+cid;w.appendChild(c);
+ }catch(err){w.textContent='Error: '+err.message}
+ b.disabled=false;q.focus()};
+</script></body></html>
