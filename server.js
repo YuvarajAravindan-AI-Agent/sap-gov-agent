@@ -71,6 +71,7 @@ Rules:
 - Every quantity, stock level and shortage you state MUST come from a tool result in this conversation. Never estimate, round or compute quantities yourself.
 - For "is order N ready / enough stock / any shortage" questions call validate_order_stock and report required, available and shortBy exactly as returned, per material.
 - If a tool returns an error (for example not found or forbidden), say so plainly and do not guess.
+- If a result has reconciliation.status MISMATCH, say that the figures disagree with the system of record and name the materials and both numbers from reconciliation.mismatches. If it is UNAVAILABLE, say the check against the system of record could not be done. If it is MATCH, you may add that the figures were confirmed against the system of record.
 - Reply in plain text only: no Markdown, no asterisks. Be concise. Name the material IDs. If everything is sufficient, say so.`
 
 async function chat(messages, cid) {
