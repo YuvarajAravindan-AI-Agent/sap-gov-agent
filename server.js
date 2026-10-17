@@ -60,7 +60,7 @@ async function runTool(name, args, cid) {
   const id = Number(args[t.arg])
   if (!Number.isInteger(id)) return { status: 400, result: { error: `${t.arg} must be an integer` } }
   const { base, headers } = await stockTarget()
-  const r = await fetch(`${base}/${t.fn}(${t.arg}=${id})`, { headers: { ...headers, 'x-correlation-id': cid } })
+  const r = await fetch(`${base}/${t.fn}(${t.arg}=${id})`, { headers: { ...headers, 'x-correlation-id': cid, 'x-end-user': USER || 'anonymous' } })
   const body = await r.json().catch(() => ({}))
   if (!r.ok) return { status: r.status, result: { error: body.error?.message || `HTTP ${r.status}` } }
   return { status: r.status, result: typeof body.value === 'string' ? JSON.parse(body.value) : body }
