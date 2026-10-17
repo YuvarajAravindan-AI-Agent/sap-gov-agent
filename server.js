@@ -101,7 +101,8 @@ app.use(express.static(__dirname + '/public'))
 app.post('/api/chat', async (req, res) => {
   try {
     if (!LLM_KEY) throw new Error('LLM_API_KEY not configured')
-    const cid = 'conv-' + String(req.body.conversationId || crypto.randomUUID()).replace(/[^\w-]/g, '').slice(0, 40)
+    const raw = String(req.body.conversationId || crypto.randomUUID()).replace(/[^\w-]/g, '')
+    const cid = 'conv-' + raw.replace(/^(conv-)+/, '').slice(0, 40)
     const messages = (req.body.messages || []).filter(m => ['user', 'assistant'].includes(m.role)).slice(-20)
     res.json({ conversationId: cid, ...(await chat(messages, cid)) })
   } catch (e) { res.status(500).json({ error: e.message }) }
